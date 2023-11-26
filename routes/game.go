@@ -23,7 +23,7 @@ func NewGameRouter() *GameRouter {
 func (gr *GameRouter) Register(prefix string, mux *http.ServeMux, ctx *server.ServerContext) {
 	gr.SessionService = services.NewSessionService(ctx)
 	mux.HandleFunc(prefix+"/session/create", gr.handleCreateSession)
-	mux.HandleFunc(prefix+"/new", gr.handleServeGame)
+	mux.HandleFunc("/new", gr.handleServeGame)
 	mux.HandleFunc(prefix+"/ws", gr.handleHandShake)
 }
 
