@@ -7,27 +7,36 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/seanburman/game-ws-server/middleware"
 	"github.com/seanburman/game-ws-server/server"
 	"github.com/seanburman/game-ws-server/services"
 )
 
-type GameRouter struct {
-	server.Router
+type GameRoute struct {
+	server.Route
 	*services.SessionService
 }
 
-func NewGameRouter() *GameRouter {
-	return &GameRouter{}
+func NewGameRoute() *GameRoute {
+	return &GameRoute{
+		Route: *server.NewRoute("/game"),
+	}
 }
 
-func (gr *GameRouter) Register(prefix string, mux *http.ServeMux, ctx *server.ServerContext) {
+func (gr *GameRoute) UseRoutes() []*server.Route {
+	return gr.Router.Routes
+}
+
+func (gr *GameRoute) Register(prefix string, mux *http.ServeMux, ctx *server.ServerContext) {
 	gr.SessionService = services.NewSessionService(ctx)
-	mux.HandleFunc(prefix+"/session/create", gr.handleCreateSession)
+	// middleware.MiddlewareVerifyJWT()
+
+	mux.Handle(prefix+"/session/create", middleware.MiddlewareVerifyJWT(http.HandlerFunc(gr.handleCreateSession)))
 	mux.HandleFunc("/new", gr.handleServeGame)
 	mux.HandleFunc(prefix+"/ws", gr.handleHandShake)
 }
 
-func (gr *GameRouter) handleCreateSession(w http.ResponseWriter, r *http.Request) {
+func (gr *GameRoute) handleCreateSession(w http.ResponseWriter, r *http.Request) {
 	// TODO: JWT MUST BE VALIDATE BEFORE THIS HANDLER
 	sid, err := gr.NewSessionID()
 	if err != nil {
@@ -50,7 +59,7 @@ func (gr *GameRouter) handleCreateSession(w http.ResponseWriter, r *http.Request
 	w.Write([]byte(s))
 }
 
-func (gr *GameRouter) handleServeGame(w http.ResponseWriter, r *http.Request) {
+func (gr *GameRoute) handleServeGame(w http.ResponseWriter, r *http.Request) {
 	sid, err := gr.SessionIDFromParam(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -67,7 +76,7 @@ func (gr *GameRouter) handleServeGame(w http.ResponseWriter, r *http.Request) {
 	entry := []byte(fmt.Sprintf(
 		`
 		<!DOCTYPE html>
-		<script src="../wasm_exec.js"></script>
+		<script src="wasm_exec.js"></script>
 		<script>
 			function func(){
 				return "%s"
@@ -83,15 +92,15 @@ func (gr *GameRouter) handleServeGame(w http.ResponseWriter, r *http.Request) {
 		}
 
 		const go = new Go();
-		WebAssembly.instantiateStreaming(fetch("../game.wasm"), go.importObject).then(result => {
+		WebAssembly.instantiateStreaming(fetch("game.wasm"), go.importObject).then(result => {
 			go.run(result.instance);
 		});
 		</script>
-		`, sid))
+		`, fmt.Sprint(uuid.UUID(sid))))
 
 	w.Write([]byte(entry))
 }
 
-func (gr GameRouter) handleHandShake(w http.ResponseWriter, r *http.Request) {
+func (gr GameRoute) handleHandShake(w http.ResponseWriter, r *http.Request) {
 
 }

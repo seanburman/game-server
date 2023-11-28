@@ -8,11 +8,10 @@ import (
 )
 
 func main() {
-	s := server.NewServer()
-
-	s.UseHealthCheck("/health-check")
-	s.UseRouter("/auth", routes.NewAuthRouter())
-	s.UseRouter("/game", routes.NewGameRouter())
-
+	s := server.Server
+	s.UseRouter("")
+	s.ServeHealthCheck("/health-check")
+	s.ServeStaticFiles("/", "./static")
+	s.Handle("/auth", routes.AuthRoute.Route)
 	log.Fatal(s.ListenAndServe())
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/csrf"
+
+	"github.com/seanburman/game-ws-server/middleware"
 	"github.com/seanburman/game-ws-server/server"
 	"github.com/seanburman/game-ws-server/services"
 )
@@ -15,28 +17,35 @@ type (
 		Token     string `json:"token,omitempty"`
 		SessionID string `json:"session_id,omitempty"`
 	}
-	AuthRouter struct {
-		*server.ServerContext
-		authService *services.AuthService
-	}
 )
 
-func NewAuthRouter() *AuthRouter {
-	return &AuthRouter{}
+type authRoute struct {
+	server.Route
+	authService *services.AuthService
 }
 
-func (ar *AuthRouter) Register(prefix string, mux *http.ServeMux, ctx *server.ServerContext) {
-	ar.ServerContext = ctx
-	ar.authService = services.NewAuthService(ctx)
-	mux.HandleFunc(prefix+"/user", ar.HandleAuthenticateUser)
-	mux.HandleFunc(prefix+"/register", ar.HandleRegisterUser)
+var AuthRoute = NewAuthRoute()
+
+func NewAuthRoute() *authRoute {
+	ar := &authRoute{
+		Route:       *server.NewRoute("/auth"),
+		authService: services.NewAuthService(server.Server.ServerContext),
+	}
+	ar.SubRoutes()
+	ar.Use(middleware.MiddlewareVerifyJWT)
+	return ar
 }
 
-func (ar *AuthRouter) HandleAuthenticateUser(w http.ResponseWriter, r *http.Request) {
+func (ar *authRoute) SubRoutes() {
+	ar.Handle("/user", ar.HandleAuthenticateUser)
+}
+
+// mux.HandleFunc(prefix+"/user", ar.HandleAuthenticateUser)
+// mux.HandleFunc(prefix+"/register", ar.HandleRegisterUser)
+
+func (ar *authRoute) HandleAuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	// 	// u := r.FormValue("username")
 	// 	// p := r.FormValue("password")
-	// TODO: Use will
-	log.Println("Authentication request")
 	t := Access{
 		Token: ar.authService.NewToken("userId"),
 	}
@@ -51,13 +60,13 @@ func (ar *AuthRouter) HandleAuthenticateUser(w http.ResponseWriter, r *http.Requ
 	w.Write([]byte(res))
 }
 
-func (ar *AuthRouter) HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
+func (ar *authRoute) HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
 	// e := r.FormValue("email")
 	// u := r.FormValue("username")
 	// p := r.FormValue("password")game
 }
 
-func (ar *AuthRouter) HandleCSRFAuthenticate(w http.ResponseWriter, r *http.Request) {
+func (ar *authRoute) HandleCSRFAuthenticate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-CSRF-Token", csrf.Token(r))
 	w.Write([]byte("success"))
 }
