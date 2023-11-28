@@ -18,17 +18,21 @@ type GameRoute struct {
 }
 
 func NewGameRoute() *GameRoute {
-	return &GameRoute{
+	gr := &GameRoute{
 		Route: *server.NewRoute("/game"),
 	}
+	gr.SessionService = services.NewSessionService()
+	gr.SubRoutes()
+	return gr
 }
 
-func (gr *GameRoute) UseRoutes() []*server.Route {
-	return gr.Router.Routes
+func (gr *GameRoute) SubRoutes() {
+	gr.Handle("", gr.handleServeGame)
+	gr.Handle("/session/create", gr.handleCreateSession)
 }
 
 func (gr *GameRoute) Register(prefix string, mux *http.ServeMux, ctx *server.ServerContext) {
-	gr.SessionService = services.NewSessionService(ctx)
+	gr.SessionService = services.NewSessionService()
 	// middleware.MiddlewareVerifyJWT()
 
 	mux.Handle(prefix+"/session/create", middleware.MiddlewareVerifyJWT(http.HandlerFunc(gr.handleCreateSession)))
@@ -43,12 +47,6 @@ func (gr *GameRoute) handleCreateSession(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "error creating session", http.StatusInternalServerError)
 	}
 
-	// var t Access
-	// err = json.NewDecoder(r.Body).Decode(&t)
-	// if err != nil || t.Token == "" {
-	// 	http.Error(w, "missing token", http.StatusBadRequest)
-	// }
-	// fmt.Println(t.Token)
 	gr.CreateSession(sid)
 	u := uuid.UUID(sid)
 	s, err := json.Marshal(Access{SessionID: fmt.Sprint(u)})
@@ -68,11 +66,12 @@ func (gr *GameRoute) handleServeGame(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("user being served session: ", services.SessionID(sid))
 	// Check sessions
-	err = gr.JoinUserSession(nil, services.SessionID(sid))
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("bad request"))
-	}
+	// err = gr.JoinUserSession(nil, services.SessionID(sid))
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	// w.WriteHeader(http.StatusBadRequest)
+	// 	// w.Write([]byte("bad request"))
+	// }
 	entry := []byte(fmt.Sprintf(
 		`
 		<!DOCTYPE html>

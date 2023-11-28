@@ -1,2 +1,3 @@
 game.wasm
 .env
+.DS_Store

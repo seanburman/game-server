@@ -24,11 +24,10 @@ type SessionService struct {
 	Sessions map[SessionID]*Session
 }
 
-func NewSessionService(ctx *server.ServerContext) *SessionService {
+func NewSessionService() *SessionService {
 	return &SessionService{
-		ServerContext: ctx,
-		Conns:         make(map[*websocket.Conn]bool),
-		Sessions:      make(map[SessionID]*Session),
+		Conns:    make(map[*websocket.Conn]bool),
+		Sessions: make(map[SessionID]*Session),
 	}
 }
 

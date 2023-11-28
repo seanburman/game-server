@@ -54,12 +54,12 @@ func (s *server) ListenAndServe() error {
 	return http.ListenAndServe(s.Port, CORS)
 }
 
-func (s *server) UseRouter(prefix string) {
-	s.Router = newRouter(prefix, s)
+func (s *server) UseRouter(Prefix string) {
+	s.Router = newRouter(Prefix, s)
 }
 
-func (s *server) ServeHealthCheck(prefix string) {
-	s.mux.HandleFunc(prefix, func(w http.ResponseWriter, r *http.Request) {
+func (s *server) ServeHealthCheck(Prefix string) {
+	s.mux.HandleFunc(Prefix, func(w http.ResponseWriter, r *http.Request) {
 		m, err := json.Marshal(Message{Message: "server is healthy"})
 		if err != nil {
 			log.Panic("error marshalling response message")
@@ -69,8 +69,8 @@ func (s *server) ServeHealthCheck(prefix string) {
 	})
 }
 
-func (s *server) ServeStaticFiles(prefix string, dir string) {
-	s.mux.Handle(prefix, http.FileServer(http.Dir(dir)))
+func (s *server) ServeStaticFiles(Prefix string, dir string) {
+	s.mux.Handle(Prefix, http.FileServer(http.Dir(dir)))
 }
 
 func (s *server) printInfo() {

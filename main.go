@@ -12,6 +12,10 @@ func main() {
 	s.UseRouter("")
 	s.ServeHealthCheck("/health-check")
 	s.ServeStaticFiles("/", "./static")
-	s.Handle("/auth", routes.AuthRoute.Route)
+	// s.Router.UseSequence(middleware.MiddlewareVerifyJWT)
+
+	s.Handle("/auth", routes.NewAuthRoute().Route)
+	s.Handle("/game", routes.NewGameRoute().Route)
+
 	log.Fatal(s.ListenAndServe())
 }

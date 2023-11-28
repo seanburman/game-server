@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -90,7 +89,6 @@ func (rtr *Router) addMiddleware(mw []Middleware, srs ...*Subroute) {
 			*sr.handler = mw[0](sr.handlerFunc)
 		}
 
-		fmt.Println("ok")
 		//TODO: What is this?
 		// Append middleware to existing handler
 		// for i := len(mw) - 1; i >= len(mw)-1; i-- {

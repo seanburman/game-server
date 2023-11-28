@@ -21,8 +21,8 @@ type (
 	}
 )
 
-func NewAuthService(ctx *server.ServerContext) *AuthService {
-	return &AuthService{ServerContext: ctx}
+func NewAuthService() *AuthService {
+	return &AuthService{}
 }
 
 func (as AuthService) NewToken(userId string) string {

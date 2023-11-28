@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/csrf"
 
-	"github.com/seanburman/game-ws-server/middleware"
 	"github.com/seanburman/game-ws-server/server"
 	"github.com/seanburman/game-ws-server/services"
 )
@@ -21,18 +20,16 @@ type (
 
 type authRoute struct {
 	server.Route
-	authService *services.AuthService
+	*services.AuthService
 }
-
-var AuthRoute = NewAuthRoute()
 
 func NewAuthRoute() *authRoute {
 	ar := &authRoute{
-		Route:       *server.NewRoute("/auth"),
-		authService: services.NewAuthService(server.Server.ServerContext),
+		Route: *server.NewRoute("/auth"),
 	}
+	ar.AuthService = services.NewAuthService()
 	ar.SubRoutes()
-	ar.Use(middleware.MiddlewareVerifyJWT)
+	// ar.Use(middleware.MiddlewareVerifyJWT)
 	return ar
 }
 
@@ -47,7 +44,7 @@ func (ar *authRoute) HandleAuthenticateUser(w http.ResponseWriter, r *http.Reque
 	// 	// u := r.FormValue("username")
 	// 	// p := r.FormValue("password")
 	t := Access{
-		Token: ar.authService.NewToken("userId"),
+		Token: ar.AuthService.NewToken("userId"),
 	}
 
 	res, err := json.Marshal(t)
